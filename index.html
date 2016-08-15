@@ -1,0 +1,37 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AS2Tracker</title>
+    <style>
+      * {
+        margin: 0;
+      }
+      html, body {
+        width: 500px;
+        height: 500px;
+      }
+    </style>
+    <script>
+      var $ = require('jquery');
+      var tracker = new (require('./tracker.js').Tracker)();
+      tracker.on('post_sent', (title, artist, songId) => {
+        $("#sentSongs").append(
+          $("<tr/>")
+            .append($("<td/>").text(title + " - " + artist))
+            .append($("<td/>").html($("<a/>").attr("href", "https://as2tracker.com/song/" + songId).text("AS2Tracker"))));
+      });
+      tracker.findLog((path) => {
+        tracker.init(path);
+      });
+    </script>
+  </head>
+  <body>
+    <table id="sentSongs">
+      <tr>
+        <th>Song</th>
+        <th>URL</th>
+      </tr>
+    </table>
+  </body>
+</html>
