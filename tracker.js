@@ -3,6 +3,7 @@ let request = require('request');
 let util = require('util');
 let EventEmitter = require('events').EventEmitter;
 let Registry = require('winreg');
+let fs = require('fs');
 
 class Tracker {
 
@@ -23,8 +24,28 @@ class Tracker {
           hive: Regsitry.HKLM,
           key: '\\SOFTWARE\\WOW6432Node\\Valve\\Steam'
         });
-        path = key.get('InstallPath', (err, item) => {
-          cb(item.value);
+        key.get('InstallPath', (err, item) => {
+          steamPath = item.value;
+          libraryFolders = [steamPath];
+          libraryFile = steamPath + '\\steamapps\\libraryfolders.vdf';
+          libraryPattern = /^\s+\"\d+\"\s+\"(.+)\"$/;
+          try {
+            data = fs.readFileSync(libraryFile, 'UTF-8');
+            for (var line in data.replace(/\r/g, '').split('\n')) {
+              match = libraryPattern.exec(line);
+              if (match != null) {
+                libraryFolders.push(match[1]);
+              }
+            }
+          } catch (e) {} // Ignore exception
+
+          for (var dir in libraryFolders) {
+            try {
+              fs.stat(dir + '\\steamapps\\appmanifest_235800.acf', function(err, stats) {
+                cb(dir + '\\steamapps\\common\\Audiosurf 2\\Audiosurf2_Data\\output_log.txt');
+              });
+            } catch (e) {} // Ignore exception
+          }
         });
         break;
     }
