@@ -12,18 +12,23 @@
         height: 500px;
       }
     </style>
+    <script src="http://code.jquery.com/jquery-3.1.0.min.js"></script>
     <script>
-      var $ = require('jquery');
-      var tracker = new (require('./tracker.js').Tracker)();
-      tracker.on('post_sent', (title, artist, songId, changes) => {
+      function update(title, artist, songId, changes) {
         $("#sentSongs").append(
-          $("<tr/>")
-            .append($("<td/>").text(title + " - " + artist))
-            .append($("<td/>").html($("<a/>").attr("href", "https://as2tracker.com/song/" + songId).text("AS2Tracker"))));
-      });
-      tracker.findLog((path) => {
-        tracker.init(path);
-      });
+        $("<tr/>")
+          .append($("<td/>").text(title + " - " + artist))
+          .append($("<td/>").html($("<a/>").attr("href", "https://as2tracker.com/song/" + songId).text("AS2Tracker"))));
+      }
+
+      // Check if we're running on electron
+      if (window && window.process && window.process.type) {
+        var tracker = new (require('./tracker.js').Tracker)();
+        tracker.on('post_sent', update);
+        tracker.findLog((path) => {
+          tracker.init(path);
+        });
+      }
     </script>
   </head>
   <body>
