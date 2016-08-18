@@ -4,10 +4,12 @@ let util = require('util');
 let EventEmitter = require('events').EventEmitter;
 let Registry = require('winreg');
 let fs = require('fs');
+let io = require('socket.io-client');
 
 class Tracker {
 
-  constructor(debug) {
+  constructor(server, debug) {
+    this.con = io(server ? server : 'http://127.0.0.1:3000');
     this.debug = debug ? true : false;
   }
 
@@ -39,7 +41,7 @@ class Tracker {
             }
           } catch (e) {} // Ignore exception
 
-          for (var dir in libraryFolders) {
+          for (var dir of libraryFolders) {
             try {
               fs.stat(dir + '\\steamapps\\appmanifest_235800.acf', function(err, stats) {
                 cb(dir + '\\steamapps\\common\\Audiosurf 2\\Audiosurf2_Data\\output_log.txt');
@@ -72,19 +74,8 @@ class Tracker {
   }
 
   _postSong(title, duration, artist) {
-    request.post('http://as2tracker.com/input_script.php', {
-      form: {
-        title: title,
-        duration: duration,
-        artist: artist
-      }
-    }, (error, response, body) => {
-      if (error)  {
-        this.emit('error', 'post_fail', error);
-      }
-      else {
-        this.emit('post_sent', title, artist, ''); // TODO: Get songId
-      }
+    this.con.emit('song_update', title, artist, duration, (songId, changes) => {
+      this.emit('post_sent', title, artist, songId, changes);
     });
   }
 }

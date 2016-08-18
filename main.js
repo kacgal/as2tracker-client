@@ -6,7 +6,8 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({useContentSize: true, titleBarStyle: "hidden", resizable: false});
-  //mainWindow.setMenu(null);
+  mainWindow.setMenu(null);
+  //mainWindow.openDevTools();
   mainWindow.loadURL(`file://${__dirname}/index.html`);
   mainWindow.on('closed', () => {
     mainWindow = null;

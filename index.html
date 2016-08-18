@@ -15,7 +15,7 @@
     <script>
       var $ = require('jquery');
       var tracker = new (require('./tracker.js').Tracker)();
-      tracker.on('post_sent', (title, artist, songId) => {
+      tracker.on('post_sent', (title, artist, songId, changes) => {
         $("#sentSongs").append(
           $("<tr/>")
             .append($("<td/>").text(title + " - " + artist))
