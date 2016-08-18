@@ -23,10 +23,18 @@
 
       // Check if we're running on electron
       if (window && window.process && window.process.type) {
+        // Electron
         var tracker = new (require('./tracker.js').Tracker)();
         tracker.on('post_sent', update);
         tracker.findLog((path) => {
           tracker.init(path);
+        });
+      }
+      else {
+        // Web version
+        $.getScript('/socket.io/socket.io.js', () => {
+          var socket = io();
+          socket.on('update', update);
         });
       }
     </script>
