@@ -56,6 +56,9 @@ class Tracker {
   init(logPath) {
     this._tail = new Tail(logPath);
     this._tail.on('line', this._handleLine.bind(this));
+    this.con.on('update', (title, artist, songid, changes) => {
+      this.emit('update', title, artist, songid, changes);
+    })
   }
 
   start() {
