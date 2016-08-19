@@ -8,6 +8,13 @@
       body {
         padding-top: 65px;
       }
+      #main > div {
+        margin-right: 10px;
+      }
+      .modal-content {
+        padding: 5%;
+        padding-top: 0;
+      }
     </style>
     <script src="http://code.jquery.com/jquery-3.1.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
@@ -17,39 +24,90 @@
         require('bootstrap');
       }
       function addSongToTable(table, title, artist, songId) {
-        $(table).append(
+        var existing = $(table).find("[data-songid=" + songId + "]");
+        existing.remove();
+        $(table).find("tbody").prepend(
           $("<tr/>")
+            .attr("data-songid", songId)
             .append($("<td/>").text(title + " - " + artist))
             .append($("<td/>").html($("<a/>").attr("href", "javascript:showSong(" + songId + ")").text("Show scoreboard"))))
       }
-      function update(title, artist, songId, changes) {
+      function update(title, artist, songId, mode, changes) {
         addSongToTable("#recent-songs", title, artist, songId);
       }
 
-      function postSent(title, artist, songId, changes) {
+      function postSent(title, artist, songId, mode, changes) {
         addSongToTable("#sent-songs", title, artist, songId);
+      }
+
+      function showSong(songid) {
+        window.con.emit("get_scoreboard", songid, (scores) => {
+          var sbholder = $("<div/>").addClass("modal-content");
+          for (mode_name in scores) {
+            sbholder.append($("<h1/>").text(mode_name));
+            var msbholder = $("<tbody/>");
+            var mtable = $("<table/>")
+              .addClass("table").addClass("table-striped")
+              .append(msbholder);
+            var sorted = Object.keys(scores[mode_name]).sort((uid1, uid2) => {
+              return scores[mode_name][uid1].score > scores[mode_name][uid2].score ? -1 : 1;
+            });
+            var i = 1;
+            for (score of sorted) {
+              var s = scores[mode_name][score];
+              msbholder.append($("<tr/>").append($("<td/>").text(i++)).append($("<td/>").text(s.username)).append($("<td/>").text(s.score)));
+            }
+            sbholder.append(mtable);
+          }
+          $("<div/>").css({
+            width: '80%',
+            height: $(window).height() * 0.8,
+            marginLeft: '10%',
+            marginTop: $(window).height() * 0.1
+          })
+            .addClass("modal")
+            .append(
+              $("<div/>")
+                .addClass("modial-dialog")
+                .append(sbholder))
+            .modal('show');
+        });
+      }
+      function updateRandomSongs(songs) {
+        $("#random-songs > tbody").html("");
+        for (song of songs) {
+          addSongToTable("#random-songs", song.title, song.artist, song.id);
+        }
       }
 
       // Check if we're running on electron or the web version
       if (window && window.process && window.process.type) {
         // Electron
         $(() => {
-          $("#main").prepend("<div class=\"well col-sm-5 col-md-5 col-lg-3\"><h2>Recently uploaded</h2><table id=\"sent-songs\" class=\"table table-striped\"></table></div>");
+          $("#main").prepend("<div class=\"well col-sm-5 col-md-5 col-lg-3\"><h2>Recently uploaded</h2><table id=\"sent-songs\" class=\"table table-striped\"><tbody></tbody></table></div>");
         });
         var tracker = new (require('./tracker.js').Tracker)();
         tracker.on('post_sent', postSent)
-        tracker.on('update', update);
         tracker.findLog((path) => {
           tracker.init(path);
         });
+        window.con = tracker.con;
       }
       else {
         // Web version
         $.getScript('/socket.io/socket.io.js', () => {
           var socket = io();
-          socket.on('update', update);
+          window.con = socket;
         });
       }
+      $(() => {
+        window.con.on('update', update);
+        window.con.on('random_songs', updateRandomSongs);
+        window.con.emit('init');
+        $("body").click(".modal-backdrop", () => {
+          $(".in").remove();
+        });
+      });
     </script>
   </head>
   <body>
@@ -74,7 +132,11 @@
     <div class="container-fluid" id="main">
       <div class="well col-sm-5 col-md-5 col-lg-3">
         <h2>Recently played</h2>
-        <table id="recent-songs" class="table table-striped"></table>
+        <table id="recent-songs" class="table table-striped"><tbody></tbody></table>
+      </div>
+      <div class="well col-sm-5 col-md-5 col-lg-3">
+        <h2>Random songs</h2>
+        <table id="random-songs" class="table table-striped"><tbody></tbody></table>
       </div>
     </div>
   </body>

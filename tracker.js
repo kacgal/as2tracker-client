@@ -56,9 +56,6 @@ class Tracker {
   init(logPath) {
     this._tail = new Tail(logPath);
     this._tail.on('line', this._handleLine.bind(this));
-    this.con.on('update', (title, artist, songid, changes) => {
-      this.emit('update', title, artist, songid, changes);
-    })
   }
 
   start() {
@@ -77,8 +74,8 @@ class Tracker {
   }
 
   _postSong(title, duration, artist) {
-    this.con.emit('song_update', title, artist, duration, (songId, changes) => {
-      this.emit('post_sent', title, artist, songId, changes);
+    this.con.emit('song_update', title, artist, duration, (songId, mode, changes) => {
+      this.emit('post_sent', title, artist, songId, mode, changes);
     });
   }
 }
