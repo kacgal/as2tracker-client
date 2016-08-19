@@ -105,7 +105,7 @@
         window.con.on('random_songs', updateRandomSongs);
         window.con.emit('init');
         $("body").click(".modal-backdrop", () => {
-          $(".in").remove();
+          $(".in").modal('hide').remove();
         });
       });
     </script>
